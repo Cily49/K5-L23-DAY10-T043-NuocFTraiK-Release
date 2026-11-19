@@ -13,6 +13,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import struct
 import sys
 from collections import Counter, defaultdict
@@ -30,6 +31,16 @@ DUP_CENTER_TOL_PX = 3.0
 
 # Sai số làm tròn khi đổi toạ độ YOLO (6 chữ số thập phân) về [0, 1].
 OOB_EPS = 1e-4
+MIN_SEGMENT_PIXELS = 1024
+MIN_SEGMENT_COVERAGE = 0.15
+MIN_BOX_COVERAGE = 0.10
+MISMATCH_SEGMENT_COVERAGE = 0.55
+MISMATCH_BOX_COVERAGE = 0.25
+MERGE_SEGMENT_COVERAGE = 0.30
+MERGE_BOX_COVERAGE = 0.25
+DRIFT_MAX_SEGMENT_COVERAGE = 0.75
+DRIFT_CENTER_OFFSET = 0.15
+DRIFT_SIZE_DELTA = 0.20
 
 
 # ---------------------------------------------------------------- tiện ích đọc file
@@ -222,6 +233,197 @@ def validate(delivery: Path) -> list[dict]:
     return out
 
 
+def class_names(path: Path) -> dict[int, str]:
+    names = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        parts = line.split(maxsplit=1)
+        if len(parts) == 2:
+            names[int(parts[0])] = parts[1].strip()
+    return names
+
+
+def box_bounds(box: tuple[int, float, float, float, float], width: int, height: int) -> tuple[int, int, int, int]:
+    _, xc, yc, bw, bh = box
+    return (
+        max(0, math.floor((xc - bw / 2) * width)),
+        max(0, math.floor((yc - bh / 2) * height)),
+        min(width, math.ceil((xc + bw / 2) * width)),
+        min(height, math.ceil((yc + bh / 2) * height)),
+    )
+
+
+def box_iou(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
+    ax1, ay1, ax2, ay2 = a
+    bx1, by1, bx2, by2 = b
+    intersection = max(0, min(ax2, bx2) - max(ax1, bx1)) * max(0, min(ay2, by2) - max(ay1, by1))
+    union = (ax2 - ax1) * (ay2 - ay1) + (bx2 - bx1) * (by2 - by1) - intersection
+    return intersection / union if union else 0.0
+
+
+def box_mask_geometry_diff(box: tuple[int, int, int, int], segment: dict) -> bool:
+    x1, y1, x2, y2 = box
+    sx, sy, sw, sh = segment.get("bbox", (0, 0, 0, 0))
+    bw, bh = x2 - x1, y2 - y1
+    if min(bw, bh, sw, sh) <= 0:
+        return False
+    box_cx, box_cy = (x1 + x2) / 2, (y1 + y2) / 2
+    seg_cx, seg_cy = sx + sw / 2, sy + sh / 2
+    center_shift = (
+        abs(box_cx - seg_cx) / bw >= DRIFT_CENTER_OFFSET
+        or abs(box_cy - seg_cy) / bh >= DRIFT_CENTER_OFFSET
+    )
+    size_change = (
+        abs(bw - sw) / sw >= DRIFT_SIZE_DELTA
+        or abs(bh - sh) / sh >= DRIFT_SIZE_DELTA
+    )
+    return center_shift or size_change
+
+
+def mask_counts_in_box(pixels: bytearray, width: int, bounds: tuple[int, int, int, int]) -> Counter:
+    x1, y1, x2, y2 = bounds
+    counts = Counter()
+    for y in range(y1, y2):
+        start = (y * width + x1) * 3
+        end = (y * width + x2) * 3
+        row = pixels[start:end]
+        counts.update(zip(row[0::3], row[1::3], row[2::3]))
+    return counts
+
+
+def generate_candidates(delivery: Path, rule_errors: list[dict]) -> list[dict]:
+    manifest = load_json(delivery / "manifest.json")
+    panoptic = load_json(delivery / "panoptic.json")
+    names = class_names(delivery / "classes.txt")
+    categories = {c["id"]: c for c in panoptic["categories"]}
+    image_sizes = {
+        Path(image["file_name"]).stem: (image["width"], image["height"])
+        for image in panoptic.get("images", [])
+    }
+    annotations = {
+        Path(annotation["file_name"]).stem: annotation
+        for annotation in panoptic.get("annotations", [])
+    }
+    excluded = {e["target"] for e in rule_errors if e["target"] in manifest["items"]}
+    found = set()
+
+    for stem, item in manifest["items"].items():
+        if stem in excluded:
+            continue
+        label_path = delivery / item["label"]
+        mask_path = delivery / item["mask"]
+        boxes = read_labels(label_path)
+        annotation = annotations.get(stem)
+        size = image_sizes.get(stem)
+        if boxes is None or annotation is None or size is None or not mask_path.is_file():
+            continue
+
+        width, height = size
+        mask_width, mask_height, pixels = read_rgb(mask_path)
+        if (mask_width, mask_height) != size:
+            continue
+
+        segment_info = {
+            segment["id"]: segment
+            for segment in annotation.get("segments_info", [])
+            if categories.get(segment.get("category_id"), {}).get("isthing")
+            and not segment.get("iscrowd")
+        }
+        if not segment_info:
+            continue
+
+        total_pixels = Counter(zip(pixels[0::3], pixels[1::3], pixels[2::3]))
+        segment_areas = {
+            sid: total_pixels.get((sid & 255, (sid >> 8) & 255, (sid >> 16) & 255), 0)
+            for sid in segment_info
+        }
+        box_names = [names.get(box[0]) for box in boxes]
+        box_bounds_list = [box_bounds(box, width, height) for box in boxes]
+        box_areas = [
+            max(0, x2 - x1) * max(0, y2 - y1)
+            for x1, y1, x2, y2 in box_bounds_list
+        ]
+        overlaps = [
+            mask_counts_in_box(pixels, width, bounds)
+            for bounds in box_bounds_list
+        ]
+        matches_by_segment: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
+        same_class_overlap: set[int] = set()
+        mismatch_by_box: set[int] = set()
+        strong_same_class_by_box: set[int] = set()
+        best_same_class_by_box: dict[int, tuple[float, float, dict]] = {}
+
+        for box_index, box in enumerate(boxes):
+            box_name = box_names[box_index]
+            box_area = box_areas[box_index]
+            if box_name is None or box_area == 0:
+                continue
+            for sid, segment in segment_info.items():
+                area = segment_areas[sid]
+                overlap = overlaps[box_index].get(
+                    (sid & 255, (sid >> 8) & 255, (sid >> 16) & 255), 0
+                )
+                if area == 0 or overlap == 0:
+                    continue
+                segment_coverage = overlap / area
+                box_coverage = overlap / box_area
+                category_name = categories[segment["category_id"]]["name"]
+
+                if box_name != category_name:
+                    if segment_coverage >= MISMATCH_SEGMENT_COVERAGE and box_coverage >= MISMATCH_BOX_COVERAGE:
+                        mismatch_by_box.add(box_index)
+                    continue
+
+                same_class_overlap.add(sid)
+                if segment_coverage >= MIN_SEGMENT_COVERAGE and box_coverage >= MIN_BOX_COVERAGE:
+                    matches_by_segment[sid].append((box_index, segment_coverage, box_coverage))
+                    iou = overlap / (area + box_area - overlap)
+                    best = best_same_class_by_box.get(box_index)
+                    if best is None or iou > best[0]:
+                        best_same_class_by_box[box_index] = (iou, segment_coverage, segment)
+                if segment_coverage >= MISMATCH_SEGMENT_COVERAGE and box_coverage >= MISMATCH_BOX_COVERAGE:
+                    strong_same_class_by_box.add(box_index)
+
+        if mismatch_by_box - strong_same_class_by_box:
+            found.add(("class_swap", stem))
+            found.add(("category_swap", stem))
+
+        for box_index, (_, coverage, segment) in best_same_class_by_box.items():
+            if (
+                coverage < DRIFT_MAX_SEGMENT_COVERAGE
+                and box_mask_geometry_diff(box_bounds_list[box_index], segment)
+            ):
+                found.add(("bbox_drift", stem))
+
+        for sid, segment in segment_info.items():
+            area = segment_areas[sid]
+            if area < MIN_SEGMENT_PIXELS:
+                continue
+            matches = matches_by_segment.get(sid, [])
+            merge_matches = [
+                match for match in matches
+                if match[1] >= MERGE_SEGMENT_COVERAGE and match[2] >= MERGE_BOX_COVERAGE
+            ]
+            separate_boxes = any(
+                box_iou(box_bounds_list[a[0]], box_bounds_list[b[0]]) < 0.35
+                for index, a in enumerate(merge_matches)
+                for b in merge_matches[index + 1:]
+            )
+            if len(merge_matches) >= 2 and separate_boxes:
+                found.add(("instance_merge", stem))
+            elif sid not in same_class_overlap:
+                sid_rgb = (sid & 255, (sid >> 8) & 255, (sid >> 16) & 255)
+                overlaps_other_class = any(
+                    box_names[index] is not None
+                    and box_names[index] != categories[segment["category_id"]]["name"]
+                    and overlaps[index].get(sid_rgb, 0) / area >= MIN_SEGMENT_COVERAGE
+                    for index in range(len(boxes))
+                )
+                if not overlaps_other_class:
+                    found.add(("missing_box", stem))
+
+    return [{"type": kind, "target": target} for kind, target in sorted(found)]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Validator lỗi luật cho lô detection + panoptic")
     ap.add_argument("delivery", type=Path)
@@ -238,9 +440,13 @@ def main() -> int:
         print(f"  {kind}: {n}")
 
     if args.candidates:
-        # TODO Pha 2: đối chiếu detection <-> panoptic để sinh ứng viên.
         args.candidates.parent.mkdir(parents=True, exist_ok=True)
-        args.candidates.write_text(json.dumps({"candidates": []}, indent=1) + "\n", encoding="utf-8")
+        candidates = generate_candidates(args.delivery, errors)
+        args.candidates.write_text(
+            json.dumps({"candidates": candidates}, indent=1, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        print(f"{len(candidates)} ứng viên -> {args.candidates}")
     return 0
 
 
