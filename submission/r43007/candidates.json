@@ -1,0 +1,208 @@
+{
+ "candidates": [
+  {
+   "type": "bbox_drift",
+   "target": "000000002157"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000002685"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000005001"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000006213"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000006771"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000016010"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000017182"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000017959"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "000000022479"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000000776"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000006723"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000008277"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000009590"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000010092"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000011615"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000013597"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000013729"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000015335"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000018193"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000018380"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000020553"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000020571"
+  },
+  {
+   "type": "category_swap",
+   "target": "000000022892"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000000776"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000006723"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000008277"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000009590"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000010092"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000011615"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000013597"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000013729"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000015335"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000018193"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000018380"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000020553"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000020571"
+  },
+  {
+   "type": "class_swap",
+   "target": "000000022892"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000001353"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000002153"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000002157"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000002685"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000005001"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000006213"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000008277"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000012670"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000015517"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000017182"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000018380"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000019109"
+  },
+  {
+   "type": "instance_merge",
+   "target": "000000025393"
+  },
+  {
+   "type": "missing_box",
+   "target": "000000017182"
+  }
+ ]
+}
