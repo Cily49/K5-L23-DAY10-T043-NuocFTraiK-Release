@@ -6,7 +6,8 @@
 Mỗi ứng viên ra một PNG: trái = ảnh gốc có vẽ box detection (đỏ = box nghi vấn, vàng = box khác)
 và viền segment panoptic nghi vấn (xanh lá); phải = vùng cắt quanh vật, phóng to.
 Nhãn chữ ghi lớp detection / lớp panoptic để người xem đối chiếu với vật thật trong ảnh.
-Kết quả xem ghi vào review_log.csv (image,type,verdict,note) — note phải nói THẤY GÌ.
+  Công cụ tạo ảnh xem trước; người review tự ghi verdict vào review_log.csv
+  (image,type,verdict,note), với note mô tả điều đã thấy.
 """
 
 from __future__ import annotations
@@ -58,12 +59,37 @@ def main() -> int:
     names = {int(l.split(" ", 1)[0]): l.split(" ", 1)[1].strip()
              for l in (d / "classes.txt").read_text(encoding="utf-8").splitlines() if l.strip()}
     cands = json.loads(Path(args.candidates).read_text(encoding="utf-8"))["candidates"]
+    panoptic = json.loads((d / "panoptic.json").read_text(encoding="utf-8"))
+    categories = {cat["id"]: cat for cat in panoptic.get("categories", [])}
+    annotations = {
+        Path(ann["file_name"]).stem: ann
+        for ann in panoptic.get("annotations", [])
+    }
     for c in cands:
-        name = c["image"]
-        img = Image.open(d / "images" / f"{name}.jpg").convert("RGB")
+        # Current validator schema is {"type": ..., "target": image_stem}.
+        # Accept the older/proposed "image" key too for compatibility.
+        name = str(c.get("image", c.get("target", "")))
+        if not name:
+            print(f"skip candidate without image/target: {c}")
+            continue
+        image_path = d / "images" / f"{name}.jpg"
+        if not image_path.is_file():
+            print(f"skip {name}: image file is missing")
+            continue
+        img = Image.open(image_path).convert("RGB")
         W, H = img.size
-        if c.get("segment_id"):
-            outline(img, d / "masks" / f"{name}.png", c["segment_id"])
+        mask_path = d / "masks" / f"{name}.png"
+        segment_ids = [c["segment_id"]] if c.get("segment_id") else []
+        if not segment_ids:
+            ann = annotations.get(name, {})
+            segment_ids = [
+                segment["id"] for segment in ann.get("segments_info", [])
+                if categories.get(segment.get("category_id"), {}).get("isthing")
+                and not segment.get("iscrowd")
+            ]
+        for segment_id in segment_ids:
+            if mask_path.is_file():
+                outline(img, mask_path, segment_id)
         draw = ImageDraw.Draw(img)
         focus = c.get("box_px") or c.get("segment_box_px") or (c.get("boxes_px") or [[0, 0, W, H]])[0]
         hot = [c.get("box_px")] + (c.get("boxes_px") or [])
@@ -90,7 +116,7 @@ def main() -> int:
         title = f"{name}  {c['type']}  det={c.get('det_class', '-')}  pan={c.get('pan_class', '-')}  " \
                 f"iou={c.get('iou', '-')}  out={c.get('seg_outside', '-')}"
         ImageDraw.Draw(canvas).text((5, 12), title, fill=(255, 255, 255))
-        canvas.save(out / f"{name}.png")
+        canvas.save(out / f"{name}_{c['type']}.png")
     print(f"{len(cands)} ảnh -> {out}")
     return 0
 
