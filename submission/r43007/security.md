@@ -1,9 +1,9 @@
 # Bảo mật khi làm việc
 
-> Gắn với lô `lab250_50b1b743a7cc` (seed 43007, 250 ảnh, 10 job J01–J10) nhóm vừa bàn giao.
+> Gắn với lô `lab250_5cb4e05ec4f4` (seed 43007, 250 ảnh, 10 job J01–J10) nhóm vừa bàn giao.
 
 ## 1. Ca USB: hết giờ, muốn chép lô về nhà làm tiếp
-Không chép. Lô `lab250_50b1b743a7cc` có ảnh người thật nhìn rõ mặt (ví dụ `000000001296`, `000000016598`), lại kèm `jobs.csv` ghi mã người gán/người kiểm và `manifest.json` của bản v1 đang HOLD. USB rời khỏi máy công ty là dữ liệu đã ra ngoài vùng kiểm soát: mất USB là lộ cả lô, và không còn biết ai đã giữ bản nào (lineage chỉ ghi được những gì xảy ra trong hệ thống). Gửi về email cá nhân hay nhờ người khác làm hộ cũng sai theo cùng một lý do: dữ liệu ra khỏi hệ thống được cấp quyền, và người kia không có quyền với job. Cách đúng: dừng ở job đang làm, lưu tiến độ trên CVAT/máy công ty, báo trưởng nhóm nếu trễ hạn để xin gia hạn hoặc chia lại job; nếu thật sự cần làm từ xa thì dùng VPN/máy ảo công ty đã được cấp phép.
+Không chép. Lô `lab250_5cb4e05ec4f4` có ảnh người thật nhìn rõ mặt (ví dụ `000000001296`, `000000016598`), lại kèm `jobs.csv` ghi mã người gán/người kiểm và `manifest.json` của bản v1 đang HOLD. USB rời khỏi máy công ty là dữ liệu đã ra ngoài vùng kiểm soát: mất USB là lộ cả lô, và không còn biết ai đã giữ bản nào (lineage chỉ ghi được những gì xảy ra trong hệ thống). Gửi về email cá nhân hay nhờ người khác làm hộ cũng sai theo cùng một lý do: dữ liệu ra khỏi hệ thống được cấp quyền, và người kia không có quyền với job. Cách đúng: dừng ở job đang làm, lưu tiến độ trên CVAT/máy công ty, báo trưởng nhóm nếu trễ hạn để xin gia hạn hoặc chia lại job; nếu thật sự cần làm từ xa thì dùng VPN/máy ảo công ty đã được cấp phép.
 
 ## 2. Năm việc: được hay không
 - **Mở job được giao trên máy công ty: ĐƯỢC.** Đúng người, đúng job, đúng thiết bị; ví dụ A01 mở J02 trên máy công ty để sửa box `cup` theo ticket.
