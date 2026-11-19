@@ -1,0 +1,9 @@
+image,type,annotator,reviewer,action
+000000009400,missing_image,A05,Q02,bổ sung lại ảnh (file thiếu trong lô v1)
+000000009590,class_swap,A05,Q02,gán lại lớp của box detection (xem ảnh để biết lớp đúng)
+000000009914,bbox_out_of_bounds,A03,Q02,gán lại box: box vượt ra ngoài ảnh
+000000011615,class_swap,A03,Q02,gán lại lớp của box detection (xem ảnh để biết lớp đúng)
+000000013004,missing_image,A03,Q02,bổ sung lại ảnh (file thiếu trong lô v1)
+000000016228,duplicate_box,A01,Q01,gán lại nhãn: xoá box bị lặp
+000000017182,bbox_drift,A01,Q01,gán lại box: box lệch khỏi vật
+000000019221,invalid_class,A03,Q01,gán lại nhãn: class_id nằm ngoài 0-79

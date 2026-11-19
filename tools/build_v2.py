@@ -205,7 +205,7 @@ def main() -> int:
 
     notes = []
     if hash_fixed:
-        notes.append(f"- wrong_hash: ảnh qua kiểm sơ bộ (JPEG hợp lệ) nên chỉ ghi lại sha256 đúng trong manifest.csv; cần người mở ảnh xác nhận nội dung còn đúng:{', '.join(hash_fixed)}")
+        notes.append(f"- wrong_hash: ảnh qua kiểm sơ bộ (JPEG hợp lệ) nên chỉ ghi lại sha256 đúng trong manifest.csv; cần người mở ảnh xác nhận nội dung còn đúng ({', '.join(hash_fixed)})")
     if hash_suspect:
         notes.append(f"- wrong_hash nhưng ảnh hỏng: chuyển vào rework_queue: {', '.join(hash_suspect)}")
     if guideline_fixed:
