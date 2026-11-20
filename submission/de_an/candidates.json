@@ -1,0 +1,276 @@
+{
+ "candidates": [
+  {
+   "type": "bbox_drift",
+   "target": "img_0033"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0056"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0069"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0090"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0092"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0094"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0101"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0142"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0223"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0230"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0233"
+  },
+  {
+   "type": "bbox_drift",
+   "target": "img_0238"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0001"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0016"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0024"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0041"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0069"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0075"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0092"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0095"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0096"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0101"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0118"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0152"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0159"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0160"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0172"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0184"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0186"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0188"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0195"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0199"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0218"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0229"
+  },
+  {
+   "type": "category_swap",
+   "target": "img_0230"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0001"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0016"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0024"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0041"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0069"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0075"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0092"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0095"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0096"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0101"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0118"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0152"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0159"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0160"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0172"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0184"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0186"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0188"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0195"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0199"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0218"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0229"
+  },
+  {
+   "type": "class_swap",
+   "target": "img_0230"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0033"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0075"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0083"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0092"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0101"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0132"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0210"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0219"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0223"
+  },
+  {
+   "type": "instance_merge",
+   "target": "img_0248"
+  }
+ ]
+}

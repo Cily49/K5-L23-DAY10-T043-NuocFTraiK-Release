@@ -1,12 +1,44 @@
-# Báo cáo nhóm <<XX>>
+# Báo cáo nhóm T043 — NuocFTraiK
 
 ## 1. Số liệu luyện tập
-- F1 theo seed (rule / cross_check / overall): <<seed: ... / ... / ...>>
-- Số ứng viên trên lô sạch (`--no-faults`): <<...>>; hàng đợi trên seed luyện tập: <<... ảnh>>
-- Ngưỡng đã chọn và cách chọn (không dùng `_private`): <<...>>
+- **F1 theo seed** (lỗi luật / lỗi gán nhãn / tổng), đo bằng `score_findings.py` (chỉ in số làm tròn):
+
+  | Seed | `errors.json` dùng để đo | Lỗi luật | Lỗi gán nhãn | Tổng |
+  |---|---|---|---|---|
+  | 43007 (luyện tập) | bản nộp cuối: 10 lỗi luật + 9 lỗi gán nhãn `confirmed` | ≈ 1.0 | ≈ 0.6 | ≈ 0.8 |
+  | 43007 | chỉ lỗi luật của validator (10 mục) | ≈ 1.0 | — | ≈ 0.7 |
+  | 11 | chỉ lỗi luật (13 mục) | ≈ 1.0 | — | ≈ 0.8 |
+  | 101 | chỉ lỗi luật (14 mục) | ≈ 1.0 | — | ≈ 0.8 |
+  | 2024 | chỉ lỗi luật (12 mục) | ≈ 1.0 | — | ≈ 0.8 |
+  | 777 | chỉ lỗi luật (15 mục) | ≈ 1.0 | — | ≈ 0.8 |
+
+  Nhóm chỉ xem ảnh trên seed 43007, nên các seed khác chỉ có lỗi luật ("—" là chưa nộp lỗi gán nhãn nào).
+- **Số ứng viên:**
+  - Lô sạch (`inject_release.py --seed 5 --no-faults`, 50 ảnh khác bộ luyện tập): **0 lỗi luật**, **13 ứng viên**. Lô này không có lỗi cài vào, nên cả 13 ứng viên là lệch tự nhiên của COCO.
+  - Seed 43007: **51 ứng viên trên 29 ảnh** (hàng đợi xem ảnh). Các seed khác cũng tương tự: 51–52 ứng viên trên 30–32 ảnh.
+- **Ngưỡng và cách chọn** (chỉ dùng `delivery/` và lô sạch, không đọc `_private/`):
+  - *Lỗi luật:* `duplicate_box` chỉ báo khi hai box cùng lớp có kích thước lệch ≤ 1,5 px và tâm lệch ≤ 3 px. Không dùng IoU, vì theo GUIDE thì COCO có cặp box thật chồng nhau tới IoU ≈ 0,66. `bbox_out_of_bounds` cho sai số 1e-4 để bỏ qua lỗi làm tròn số thực. Với các ngưỡng này, lô sạch không có lỗi luật nào.
+  - *Ứng viên (đối chiếu detection ↔ panoptic):* chỉ xét segment thing có ít nhất 1024 pixel. Box và segment được ghép theo tỉ lệ phủ pixel của mask trong box, không chỉ theo IoU bbox. Các ngưỡng chính:
+    - đổi lớp khi segment phủ ≥ 55% và box phủ ≥ 25%;
+    - gộp instance khi segment phủ ≥ 30% mỗi box;
+    - box lệch khi tâm lệch ≥ 15% hoặc kích thước lệch ≥ 20%.
+  - Cách chỉnh: chạy trên lô sạch để đếm ứng viên do lệch tự nhiên, rồi chạy trên seed 43007 để xem hàng đợi có vừa sức 5 người xem trong thời gian Pha 2 không. Kết quả là 13 ứng viên trên lô sạch và 29 ảnh trên lô luyện tập, mỗi người khoảng 6 ảnh. Nhóm không siết thêm vì ghép lỏng hơn thì hàng đợi to ra, còn siết chặt hơn thì dễ bỏ sót lỗi thật.
 
 ## 2. Vì sao báo hết ứng viên làm F1 giảm?
-<<Trả lời bằng số của nhóm.>>
+Nhóm thử đưa thẳng cả 51 ứng viên của seed 43007 vào `errors.json` mà không xem ảnh (cùng với 10 lỗi luật), rồi chấm lại:
+
+| Cách nộp | Số mục | Lỗi gán nhãn F1 | Tổng F1 |
+|---|---|---|---|
+| Chỉ lỗi luật | 10 | — | ≈ 0.7 |
+| Lỗi luật + **toàn bộ 51 ứng viên** | 61 | ≈ 0.1 | ≈ 0.4 |
+| Lỗi luật + 9 ứng viên đã xem ảnh và `confirmed` (bản nộp) | 19 | ≈ 0.6 | ≈ 0.8 |
+
+Lý do:
+- **Ứng viên chỉ là giả thuyết.** Sau khi xem ảnh, nhóm chỉ `confirmed` 9/51 ứng viên. Nếu nộp hết thì có khoảng 42 mục báo sai (false positive), precision tụt mạnh nên F1 giảm, dù recall có thể tăng một chút.
+- **Một ảnh có thể ra nhiều giả thuyết, nhưng mỗi ảnh mang nhiều nhất một lỗi.** 51 ứng viên chỉ nằm trên 29 ảnh, nên dù đoán may thì ít nhất 22 mục chắc chắn sai.
+- **COCO tự nó đã lệch.** Lô sạch không có lỗi cài vào mà vẫn ra 13 ứng viên. Những lệch tự nhiên này sẽ thành báo sai nếu không có người xem ảnh để `rejected`.
+
+Kết luận: cộng nhiều ứng viên vào `errors.json` không làm điểm tăng. Phải có bước người xem ảnh để lọc, và số 0.4 so với 0.8 trong bảng trên cho thấy bước này đáng công.
 
 ## 3. Quyết định và lineage
 - **Tỉ lệ ảnh lỗi (QC v1):** lấy số ảnh lỗi trong `errors.json` chia cho 250 ảnh của lô `lab250_5cb4e05ec4f4`. Mỗi ảnh chỉ tính một lỗi. Lỗi `scene_leak` cũng tính là một ảnh.
@@ -43,4 +75,9 @@ Làm bằng `tools/trace_query.py` (đọc `incoming/ticket.md`, `guideline/chan
 **Tầng a khác tầng b:** tầng a là chỗ team AI đã thấy tận mắt (xác nhận được ngay); tầng b là cùng nguyên nhân gốc (job v1.2 + có cup) nhưng chưa ai báo. Đây là phạm vi ảnh hưởng thật, cần mở lại cùng đợt để không phải chờ ticket tiếp theo.
 
 ## 6. Bug hoặc điểm chưa rõ trong lab (nếu có)
-<<>>
+- **`release_id` của lô v1 khác nhau giữa các máy dù cùng seed.**
+  - Trên máy của Bình (macOS), `inject_release.py --seed 43007` ra `lab250_9ad14f1e765d`, chạy lại 2 lần vẫn ra đúng id này. Lô v2 trong `submission/` được dựng trên máy của thành viên khác, từ lô `lab250_5cb4e05ec4f4`.
+  - So `manifest` của hai lô: 483 hash giống nhau, chỉ khác 1 mục. Ảnh và nhãn YOLO giống nhau.
+  - Nhóm đoán nguyên nhân là file mask PNG được nén khác nhau tuỳ phiên bản Python/zlib, nên hash khác, kéo theo `release_id` khác. Điều này chưa được kiểm chứng.
+  - Hệ quả: `check_handover.py` chạy trên máy khác với máy đã sinh lô sẽ không tìm thấy v1/v2 đúng tên, và mục H1 có thể FAIL dù nội dung lô không đổi. Nhóm đề nghị giảng viên chấm H1 theo nội dung ảnh/nhãn, hoặc tính `release_id` không phụ thuộc cách nén PNG.
+- **Ảnh `000000017182` có hai mục trong `errors.json`** (`bbox_drift` và `missing_box`), trong khi GUIDE nói mỗi ảnh mang nhiều nhất một lỗi. Nhóm đã ghi rõ trường hợp này ở mục 3 nhưng chưa rõ sẽ được chấm thế nào.
